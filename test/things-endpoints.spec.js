@@ -1,48 +1,48 @@
 /* eslint-disable quotes */
-const knex = require('knex');
-const app = require('../src/app');
-const helpers = require('./test-helpers');
-const supertest = require('supertest');
+const knex = require("knex");
+const app = require("../src/app");
+const helpers = require("./test-helpers");
+const supertest = require("supertest");
 
-describe('Things Endpoints', function() {
+describe("Things Endpoints", function() {
   let db;
 
   const { testUsers, testThings, testReviews } = helpers.makeThingsFixtures();
 
-  before('make knex instance', () => {
+  before("make knex instance", () => {
     db = knex({
-      client: 'pg',
-      connection: process.env.TEST_DB_URL,
+      client: "pg",
+      connection: process.env.TEST_DB_URL
     });
-    app.set('db', db);
+    app.set("db", db);
   });
 
-  after('disconnect from db', () => db.destroy());
+  after("disconnect from db", () => db.destroy());
 
-  before('cleanup', () => helpers.cleanTables(db));
+  before("cleanup", () => helpers.cleanTables(db));
 
-  afterEach('cleanup', () => helpers.cleanTables(db));
+  afterEach("cleanup", () => helpers.cleanTables(db));
 
   describe(`GET /api/things`, () => {
     context(`Given no things`, () => {
       it(`responds with 200 and an empty list`, () => {
         return supertest(app)
-          .get('/api/things/')
+          .get("/api/things/")
           .expect(200, []);
       });
     });
 
-    context('Given there are things in the database', () => {
-      beforeEach('insert things', () =>
+    context("Given there are things in the database", () => {
+      beforeEach("insert things", () =>
         helpers.seedThingsTables(db, testUsers, testThings, testReviews)
       );
 
-      it('responds with 200 and all of the things', () => {
+      it("responds with 200 and all of the things", () => {
         const expectedThings = testThings.map(thing =>
           helpers.makeExpectedThing(testUsers, thing, testReviews)
         );
         return supertest(app)
-          .get('/api/things')
+          .get("/api/things")
           .expect(200, expectedThings);
       });
     });
@@ -53,14 +53,14 @@ describe('Things Endpoints', function() {
         testUser
       );
 
-      beforeEach('insert malicious thing', () => {
+      beforeEach("insert malicious thing", () => {
         return helpers.seedMaliciousThing(db, testUser, maliciousThing);
       });
 
-      it('removes XSS attack content', () => {
+      it("removes XSS attack content", () => {
         return supertest(app)
           .get(`/api/things`)
-          .set('Authorization', helpers.makeAuthHeader(testUsers[0]))
+          .set("Authorization", helpers.makeAuthHeader(testUsers[0]))
           .expect(200)
           .expect(res => {
             expect(res.body[0].title).to.eql(expectedThing.title);
@@ -72,23 +72,23 @@ describe('Things Endpoints', function() {
 
   describe.only(`GET /api/things/:thing_id`, () => {
     context(`Given no things`, () => {
-      beforeEach(() => db.into('thingful_users').insert(testUsers));
+      beforeEach(() => helpers.seedUsers(db, testUsers));
 
       it(`responds with 404`, () => {
         const thingId = 123456;
         return supertest(app)
           .get(`/api/things/${thingId}`)
-          .set('Authorization', helpers.makeAuthHeader(testUsers[0]))
+          .set("Authorization", helpers.makeAuthHeader(testUsers[0]))
           .expect(404, { error: `Thing doesn't exist` });
       });
     });
 
-    context('Given there are things in the database', () => {
-      beforeEach('insert things', () =>
+    context("Given there are things in the database", () => {
+      beforeEach("insert things", () =>
         helpers.seedThingsTables(db, testUsers, testThings, testReviews)
       );
 
-      it('responds with 200 and the specified thing', () => {
+      it("responds with 200 and the specified thing", () => {
         const thingId = 2;
         const expectedThing = helpers.makeExpectedThing(
           testUsers,
@@ -98,7 +98,7 @@ describe('Things Endpoints', function() {
 
         return supertest(app)
           .get(`/api/things/${thingId}`)
-          .set('Authorization', helpers.makeAuthHeader(testUsers[0]))
+          .set("Authorization", helpers.makeAuthHeader(testUsers[0]))
           .expect(200, expectedThing);
       });
     });
@@ -109,11 +109,11 @@ describe('Things Endpoints', function() {
         testUser
       );
 
-      beforeEach('insert malicious thing', () => {
+      beforeEach("insert malicious thing", () => {
         return helpers.seedMaliciousThing(db, testUser, maliciousThing);
       });
 
-      it('removes XSS attack content', () => {
+      it("removes XSS attack content", () => {
         return supertest(app)
           .get(`/api/things/`)
           .expect(200)
@@ -127,23 +127,23 @@ describe('Things Endpoints', function() {
 
   describe(`GET /api/things/:thing_id/reviews`, () => {
     context(`Given no things`, () => {
-      beforeEach(() => db.into('thingul_users').insert(testUsers));
+      beforeEach(() => helpers.seedUsers(db, testUsers));
 
       it(`responds with 404`, () => {
         const thingId = 123456;
         return supertest(app)
           .get(`/api/things/${thingId}/reviews`)
-          .set('Authorization', helpers.makeAuthHeader(testUsers[0]))
+          .set("Authorization", helpers.makeAuthHeader(testUsers[0]))
           .expect(404, { error: `Thing doesn't exist` });
       });
     });
 
-    context('Given there are reviews for thing in the database', () => {
-      beforeEach('insert things', () =>
+    context("Given there are reviews for thing in the database", () => {
+      beforeEach("insert things", () =>
         helpers.seedThingsTables(db, testUsers, testThings, testReviews)
       );
 
-      it('responds with 200 and the specified reviews', () => {
+      it("responds with 200 and the specified reviews", () => {
         const thingId = 1;
         const expectedReviews = helpers.makeExpectedThingReviews(
           testUsers,
@@ -153,7 +153,7 @@ describe('Things Endpoints', function() {
 
         return supertest(app)
           .get(`/api/things/${thingId}/reviews`)
-          .set('Authorization', helpers.makeAuthHeader(testUsers[0]))
+          .set("Authorization", helpers.makeAuthHeader(testUsers[0]))
           .expect(200, expectedReviews);
       });
     });
